@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+##
+# Kore Bootstrap
+# Copyright(c) 2013 Koreviz
+# MIT Licensed
+##
+
+PKG=redis-3.2.9
+if [ ! -f .installed-$PKG ];
+then
+echo "Install Redis"
+mkdir -p redis && curl -sL http://download.redis.io/releases/$PKG.tar.gz | tar -xz --strip 1 -C redis && cd redis && make && make install && cd ../ && sudo mkdir -p /var/lib/redis && sudo cp ~/etc/{redis.conf,sysctl.conf} /etc/. && rm -fR redis && touch .installed-$PKG
+fi
+
+PKG=phantomjs-1.9.8-linux-x86_64
+if [ ! -f .installed-$PKG ];
+then
+echo "Install $PKG"
+mkdir -p $PKG && curl -sL https://bitbucket.org/ariya/phantomjs/downloads/$PKG.tar.bz2 | tar -xj --strip 1 -C $PKG && cd $PKG && cp -pR bin/* /usr/local/bin/ && cd ../ && rm -fR $PKG && touch .installed-$PKG
+fi

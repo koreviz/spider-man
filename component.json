@@ -1,0 +1,13 @@
+{
+	"name": "app",
+	"version": "1.0.0",
+	"dependencies": {
+	},
+	"scripts": [
+		"script/app.js"
+	],
+	"styles": [
+		"build/app.css"
+	],
+	"main": "script/app.js"
+}

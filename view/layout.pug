@@ -1,0 +1,36 @@
+!!! 5
+//- Kore Layout
+//- Copyright(c) 2013 Koreviz
+//- MIT Licensed
+html
+	//- head
+	block head
+		include include/_head
+
+	body
+		//- header
+		block header
+			include include/_header
+
+		//- main
+		block main
+			main(role='main')
+				ul.bookmarks
+					for bookmark in bookmarks
+						li
+							a(href=bookmark.url, target='_blank')
+								img(src=bookmark.img)
+								p= bookmark.desc
+
+		//- footer
+		block footer
+			include include/_footer
+
+		//- script
+		script(src='build.js')
+		script.
+			require('app')
+
+		//- analytics
+		block analytics
+			include include/_analytics

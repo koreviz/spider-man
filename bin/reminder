@@ -1,0 +1,150 @@
+#!/usr/bin/env node
+/**
+ * Kore Reminder
+ * Copyright(c) 2013 Koreviz
+ * MIT Licensed
+ */
+var exec = require('child_process').exec,
+fs = require('fs'),
+program = require('commander'),
+pug = require('pug'),
+phantom = require('node-phantom'),
+core = require('../core')(),
+redis = core.redis
+
+program
+.version('1.0.0')
+.usage('[options]')
+.option('-a, --add [list] [desc...]', 'Add reminder(s)')
+.option('-d, --del [list] [desc...]', 'Delete matching list/reminder(s)')
+.option('-l, --list', 'List reminders')
+.option('-f, --find [list]', 'Find the first matching <query>')
+.option('-u, --update [list] [desc] [desc]', 'Update the matching reminder')
+.parse(process.argv)
+
+/**
+ * add
+ */
+var add = function(list, desc) {
+    redis.sadd('reminder:' + list, desc,
+	function(err) {
+		if (err)
+		throw err
+
+		process.exit()
+	})
+},
+
+/**
+ * del
+ */
+del = function(list, desc, cb) {
+	var key = 'reminder:' + list
+
+	console.log(desc.length)
+
+	console.log('    \033[36mkey: ' + key + '\033[0m\033[33m')
+
+	if (desc.length)
+	desc.forEach(
+	function(item, index, array) {
+		redis.srem(key, item,
+		function(err) {
+			if (err)
+			throw err
+			
+			console.log('    member: ' + item)
+
+			if (index+1 === array.length) {
+				console.log('\033[0m\n')
+
+				if (cb)
+				cb()
+				else
+				process.exit()
+			}
+		})
+	})
+	else
+	redis.del(key,
+	function(err) {
+		if (err)
+		throw err
+
+		console.log('\033[0m')
+
+		process.exit()
+	})
+},
+
+/**
+ * find
+ */
+find = function(list) {
+	redis.smembers('reminder:' + list,
+	function(err, members) {
+		if (err)
+		throw err
+
+		if (members.length) {
+			console.log('    \033[36mlist: ' + list + '\033[0m\033[33m')
+		
+			members.forEach(
+			function(item, index, list) {
+				console.log('        ' + item)
+
+				if (index+1 === list.length) {
+					console.log('\033[0m')
+					process.exit()
+				}
+			})
+		}
+		else
+		process.exit()
+	})
+},
+
+/**
+ * list
+ */
+list = function() {
+	redis.keys('reminder:*',
+	function(err, keys) {
+		if (err)
+		throw err
+
+		if (keys.length)
+		keys.forEach(
+		function(item, index, list) {
+			console.log('    \033[36mlist: ' + item.replace('reminder:', '') + '\033[0m\n')
+
+			if (index+1 === list.length)
+			process.exit()
+		})
+		else
+		process.exit()
+	})
+},
+
+/**
+ * update
+ */
+update = function(list, desc) {
+	del(list, desc.shift(),
+	function() {
+		add(list, desc)
+	})
+}
+
+if (program.add)
+add(program.add, program.args)
+else if (program.del)
+del(program.del, program.args)
+else if (program.list)
+list()
+else if (program.find)
+find(program.find)
+else if (program.update)
+update(program.update, program.args)
+else
+list()

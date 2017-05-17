@@ -1,0 +1,16 @@
+# humanstxt.org/
+# The humans responsible & technology colophon
+
+# TEAM
+	
+	Shawn Jonnet -- CSA -- sjonnet
+
+# THANKS
+
+	<name>
+
+# TECHNOLOGY COLOPHON
+
+	HTML5, CSS3, ES6
+	Node, PhantomJS, Redis, AWS SDK, Commander.js, Component, Pug, Node Phantom, Styl, UglifyJS, HTML5 Boilerplate,
+	mad, Sublime Text 2, Sublime Package Manager, Vim, Vundle

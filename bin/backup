@@ -1,0 +1,19 @@
+#!/bin/bash
+##
+# Kore Backup
+# Copyright(c) 2013 Koreviz
+# MIT Licensed
+##
+mkdir -p ./tmp/backups && cd ./tmp/
+
+echo "Redis dump kore"
+redis-cli SAVE
+
+echo "Copy dump"
+cp ../var/lib/redis/dump.rdb ./backups/
+
+echo "S3"
+../bin/s3 -b siberian backups
+
+echo "Clean up"
+rm -R backups

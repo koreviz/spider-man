@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+/**
+ * Kore Note
+ * Copyright(c) 2013 Koreviz
+ * MIT Licensed
+ */
+var exec = require('child_process').exec,
+fs = require('fs'),
+program = require('commander'),
+pug = require('pug'),
+phantom = require('node-phantom'),
+core = require('../core')(),
+redis = core.redis
+
+program
+.version('1.0.0')
+.usage('[options]')
+.option('-a, --add [title] [tag...]', 'Add note')
+.option('-d, --del', 'Delete first matching note')
+.option('-l, --list', 'List notes')
+.option('-f, --find', 'Find the first matching <query>')
+.option('-s, --search', 'Search notes via full-text <query>')
+.option('-u, --update [title] [tag...]', 'Update the first matching note')
+.option('-S, --stats', 'Display statistics about notes')
+.parse(process.argv)
+
+/**
+ * each
+ */
+var each = function(item, index, list) {
+	redis.hgetall(item, 
+	function(err, hash) { 
+		if (err)
+		throw err
+
+		console.log('    \033[36mtitle: ' + hash.title + '\033[0m')
+		console.log('    \033[90mtags: ' + hash.tags + '\033[0m\n')
+
+		if (index+1 === list.length)
+		process.exit()
+	})
+},
+
+/**
+ * add
+ */
+add = function(title, tags) {
+	var desc = ''
+
+	process.stdin.setEncoding('utf8')
+    process.stdin.on('data',
+    function(chunk) {
+        desc += chunk
+    })
+
+    process.stdin.on('end',
+    function() {
+        redis.hmset('note:' + title + ':' + desc.replace(/\s+/g, '') + ':' + tags.join(','), {
+			title: title,
+			desc: desc,
+			tags: tags.join(',')
+		},
+		function(err) {
+			if (err) 
+			throw err
+
+			redis.incr('notes', 
+			function() {
+				tags.forEach(
+				function(item, index, list) {
+					redis.zincrby(['tags', 1, item], 
+					function(err) {
+						if (err)
+						throw err
+
+						if (index+1 === list.length)
+						process.exit()
+					})
+				})
+			})
+		})
+    }).resume()
+},
+
+/**
+ * update
+ */
+update = function(title, tags) {
+	core.del('note', title,
+	function() {
+		add(title, tags)
+	})
+}
+
+if (program.add)
+add(program.add, program.args)
+else if (program.del)
+core.del('note', program.args.join(' '))
+else if (program.list)
+core.list('note', undefined, each)
+else if (program.find)
+core.find('note', program.args.join(' '),
+function(err, hash) { 
+	if (err)
+	throw err
+	
+	console.log('    \033[36mtitle: ' + hash.title + '\033[0m')
+	
+	console.log('    \033[33mdesc: ')
+	console.log('        ' + hash.desc.replace(/\n/g, '\n        ') + '\033[0m')
+	console.log('    \033[90mtags: ' + hash.tags + '\033[0m\n')
+	
+	process.exit()
+})
+else if (program.search)
+core.search('note', program.args.join(' '), each)
+else if (program.update)
+update(program.update, program.args)
+else if (program.stats)
+core.stats('notes')
+else
+core.list('note', undefined, each)

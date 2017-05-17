@@ -1,0 +1,11 @@
+#!/bin/bash
+##
+# Kore Restore
+# Copyright(c) 2013 Koreviz
+# MIT Licensed
+##
+echo "Redis shutdown"
+redis-cli SHUTDOWN
+
+echo "Redis restore kore"
+curl -sL http://s3.amazonaws.com/siberian/backups/dump.rdb > ./var/lib/redis/dump.rdb
