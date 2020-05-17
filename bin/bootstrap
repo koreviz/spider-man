@@ -5,7 +5,7 @@
 # MIT Licensed
 ##
 
-PKG=redis-6.0.2
+PKG=redis-6.0.3
 if [ ! -f .installed-$PKG ];
 then
 echo "Install Redis"
